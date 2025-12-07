@@ -58,7 +58,7 @@ export async function generatePowerPoint(proposal: Proposal): Promise<void> {
 /**
  * 表紙スライドを追加
  */
-function addTitleSlide(pptx: PptxGenJS, proposal: Proposal): void {
+function addTitleSlide(pptx: any, proposal: Proposal): void {
   const slide = pptx.addSlide();
 
   // 背景色
