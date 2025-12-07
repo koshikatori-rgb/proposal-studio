@@ -95,9 +95,9 @@ export default function DashboardPage() {
 
   const getStatusBadge = (status: Proposal['status']) => {
     const styles = {
-      draft: 'bg-gray-100 text-gray-700',
-      in_progress: 'bg-blue-100 text-blue-700',
-      completed: 'bg-green-100 text-green-700',
+      draft: 'bg-gray-50 text-gray-600 border border-gray-300',
+      in_progress: 'bg-gray-50 text-gray-900 border border-gray-400',
+      completed: 'bg-black text-white border border-black',
     };
 
     const labels = {
@@ -107,20 +107,20 @@ export default function DashboardPage() {
     };
 
     return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status]}`}>
+      <span className={`px-3 py-1 text-xs font-medium tracking-wide ${styles[status]}`}>
         {labels[status]}
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white py-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
         {/* ヘッダー */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-start mb-16">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">ダッシュボード</h1>
-            <p className="text-gray-600 mt-2">提案書の一覧と管理</p>
+            <h1 className="text-2xl font-medium text-black tracking-wide mb-3">Dashboard</h1>
+            <p className="text-sm text-gray-500 tracking-wide">提案書の一覧と管理</p>
           </div>
           <Button onClick={() => setShowNewModal(true)}>
             新規作成
@@ -129,8 +129,8 @@ export default function DashboardPage() {
 
         {/* 提案書一覧 */}
         {proposals.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">
+          <Card className="text-center py-24">
+            <p className="text-sm text-gray-400 mb-8 tracking-wide">
               まだ提案書がありません
             </p>
             <Button onClick={() => setShowNewModal(true)}>
@@ -138,33 +138,33 @@ export default function DashboardPage() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
             {proposals.map((proposal) => (
               <Card
                 key={proposal.id}
                 hover
-                className="cursor-pointer"
+                className="cursor-pointer border-0"
                 onClick={() => router.push(`/proposal/${proposal.id}/outline`)}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+                <div className="flex justify-between items-start mb-6">
+                  <h3 className="text-base font-medium text-black line-clamp-2 tracking-wide flex-1 pr-4">
                     {proposal.title}
                   </h3>
                   {getStatusBadge(proposal.status)}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-4">
-                  クライアント: {proposal.clientName}
+                <p className="text-xs text-gray-500 mb-8 tracking-wide">
+                  {proposal.clientName}
                 </p>
 
-                <div className="flex justify-between items-center text-xs text-gray-500">
-                  <span>更新: {formatDate(proposal.updatedAt)}</span>
+                <div className="flex justify-between items-center text-xs text-gray-400 tracking-wide">
+                  <span>{formatDate(proposal.updatedAt)}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(proposal.id);
                     }}
-                    className="text-red-600 hover:text-red-700 font-medium"
+                    className="text-gray-500 hover:text-black transition-colors"
                   >
                     削除
                   </button>
@@ -176,13 +176,13 @@ export default function DashboardPage() {
 
         {/* 新規作成モーダル */}
         {showNewModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div className="bg-white border border-gray-200 p-12 max-w-lg w-full mx-4">
+              <h2 className="text-lg font-medium text-black mb-8 tracking-wide">
                 新規提案書作成
               </h2>
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-6 mb-12">
                 <Input
                   label="提案書タイトル"
                   value={newTitle}
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <Button
                   onClick={handleCreateProposal}
                   disabled={!newTitle.trim() || !newClient.trim()}

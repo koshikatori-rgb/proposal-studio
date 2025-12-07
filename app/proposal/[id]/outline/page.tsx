@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useProposal } from '@/hooks/useProposal';
 import { ChatInterface } from '@/components/outline/ChatInterface';
+import { OutlineSummary } from '@/components/outline/OutlineSummary';
 import { Card } from '@/components/common/Card';
 
 export default function OutlinePage() {
@@ -12,10 +13,10 @@ export default function OutlinePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">読み込み中...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-300 border-t-black mx-auto mb-6"></div>
+          <p className="text-xs text-gray-400 tracking-wide">読み込み中...</p>
         </div>
       </div>
     );
@@ -23,12 +24,12 @@ export default function OutlinePage() {
 
   if (!proposal) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <Card className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <h1 className="text-lg font-medium text-black mb-4 tracking-wide">
             提案書が見つかりません
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-500 tracking-wide">
             指定された提案書は存在しないか、削除されました。
           </p>
         </Card>
@@ -37,41 +38,44 @@ export default function OutlinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white py-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
         {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{proposal.title}</h1>
-          <p className="text-gray-600 mt-2">
-            クライアント: {proposal.clientName}
+        <div className="mb-16">
+          <h1 className="text-2xl font-medium text-black tracking-wide mb-3">{proposal.title}</h1>
+          <p className="text-sm text-gray-500 tracking-wide">
+            {proposal.clientName}
           </p>
         </div>
 
         {/* ステップインジケーター */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4">
+        <div className="mb-12">
+          <div className="flex items-center gap-6">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
                 1
               </div>
-              <span className="ml-2 font-medium text-gray-900">骨子作成</span>
+              <span className="ml-3 text-xs font-medium text-black tracking-wide">骨子作成</span>
             </div>
-            <div className="flex-1 h-0.5 bg-gray-300"></div>
+            <div className="flex-1 h-px bg-gray-300"></div>
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">
+              <div className="w-6 h-6 border border-gray-300 text-gray-400 flex items-center justify-center font-medium text-xs">
                 2
               </div>
-              <span className="ml-2 font-medium text-gray-500">スライド選択</span>
+              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">スライド選択</span>
             </div>
-            <div className="flex-1 h-0.5 bg-gray-300"></div>
+            <div className="flex-1 h-px bg-gray-300"></div>
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">
+              <div className="w-6 h-6 border border-gray-300 text-gray-400 flex items-center justify-center font-medium text-xs">
                 3
               </div>
-              <span className="ml-2 font-medium text-gray-500">エクスポート</span>
+              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">エクスポート</span>
             </div>
           </div>
         </div>
+
+        {/* 骨子サマリー */}
+        <OutlineSummary proposal={proposal} />
 
         {/* コンテンツエリア */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -101,10 +105,10 @@ export default function OutlinePage() {
         </div>
 
         {/* 次へボタン */}
-        <div className="mt-8 flex justify-end">
+        <div className="mt-16 flex justify-end">
           <button
-            onClick={() => alert('スライド選択機能は次のフェーズで実装します')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            onClick={() => window.location.href = `/proposal/${proposal.id}/slides`}
+            className="px-8 py-4 bg-black text-white border border-black hover:bg-gray-800 transition-all text-sm font-medium tracking-wide"
           >
             次へ: スライド選択
           </button>

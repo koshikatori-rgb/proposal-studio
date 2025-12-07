@@ -19,14 +19,14 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        'bg-white rounded-lg shadow-md border border-gray-200 p-6',
+        'bg-white border border-gray-200 p-8',
         onClick && 'cursor-pointer',
-        hover && 'hover:shadow-lg hover:border-blue-300 transition-all',
+        hover && 'hover:border-black transition-all duration-200',
         className
       )}
     >
       {title && (
-        <h3 className="text-lg font-bold text-gray-900 mb-4">{title}</h3>
+        <h3 className="text-base font-medium text-black mb-6 tracking-wide">{title}</h3>
       )}
       {children}
     </div>

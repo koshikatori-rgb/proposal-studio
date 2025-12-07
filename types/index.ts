@@ -90,12 +90,14 @@ export type TeamRole = {
 // スライド要素
 export type SlideElement = {
   id: string;
-  type: SlideType;
+  templateId?: string;
+  type?: SlideType;
   order: number;
-  title: string;
-  mainMessage: string;
+  title?: string;
+  mainMessage?: string;
+  layout: 'title-only' | 'title-content' | 'title-bullets' | 'two-column' | 'hierarchy' | 'steps' | 'timeline';
   content: SlideContent;
-  isRequired: boolean;
+  isRequired?: boolean;
 };
 
 export type SlideType =
@@ -117,7 +119,9 @@ export type SlideType =
   | 'appendix';
 
 export type SlideContent = {
+  title?: string;
   text?: string;
+  body?: string;
   bullets?: string[];
   table?: TableData;
   diagram?: DiagramData;
@@ -169,4 +173,14 @@ export type ChatSession = {
   proposalId: string;
   section: 'current_recognition' | 'issue_setting' | 'tobe_vision' | 'approach';
   messages: ChatMessage[];
+};
+
+// スライドテンプレート
+export type SlideTemplate = {
+  id: string;
+  category: 'current_recognition' | 'issue_setting' | 'tobe_vision' | 'approach' | 'other';
+  title: string;
+  description: string;
+  layout: SlideElement['layout'];
+  defaultContent: SlideContent;
 };

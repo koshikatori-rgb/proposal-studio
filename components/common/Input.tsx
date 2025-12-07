@@ -24,9 +24,9 @@ export const Input: React.FC<InputProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-xs font-medium text-gray-600 tracking-wider uppercase">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -39,16 +39,16 @@ export const Input: React.FC<InputProps> = ({
         required={required}
         disabled={disabled}
         className={cn(
-          'px-3 py-2 border rounded-lg transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
+          'px-4 py-3 border transition-all text-sm tracking-wide',
+          'focus:outline-none focus:border-black',
+          'disabled:bg-gray-50 disabled:cursor-not-allowed',
           error
-            ? 'border-red-500 focus:ring-red-500'
+            ? 'border-red-500 focus:border-red-500'
             : 'border-gray-300'
         )}
       />
       {error && (
-        <span className="text-sm text-red-600">{error}</span>
+        <span className="text-xs text-red-600 tracking-wide">{error}</span>
       )}
     </div>
   );
