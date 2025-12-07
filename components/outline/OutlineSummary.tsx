@@ -1,20 +1,32 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type { Proposal } from '@/types';
 import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
 
 type OutlineSummaryProps = {
   proposal: Proposal;
 };
 
 export const OutlineSummary: React.FC<OutlineSummaryProps> = ({ proposal }) => {
+  const router = useRouter();
   const { outline } = proposal;
 
   return (
     <Card className="mb-12">
-      <h2 className="text-lg font-medium text-black mb-8 tracking-wide">
-        骨子サマリー
-      </h2>
+      <div className="flex justify-between items-start mb-8">
+        <h2 className="text-lg font-medium text-black tracking-wide">
+          骨子サマリー
+        </h2>
+        <Button
+          onClick={() => router.push(`/proposal/${proposal.id}/outline-edit`)}
+          variant="outline"
+          size="sm"
+        >
+          編集
+        </Button>
+      </div>
 
       <div className="space-y-8">
         {/* 現状認識 */}

@@ -27,6 +27,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInput('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Cmd+Enter (Mac) または Ctrl+Enter (Windows/Linux) で送信
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!input.trim() || loading) return;
+      handleSubmit(e as any);
+    }
+  };
+
   const getSectionTitle = () => {
     const titles: Record<string, string> = {
       current_recognition: '現状認識の言語化',
@@ -102,15 +111,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* 入力フォーム */}
       <div className="px-6 py-4 border-t border-gray-200">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="メッセージを入力..."
-            disabled={loading}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          />
+        <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <div className="flex-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="メッセージを入力... (Cmd/Ctrl+Enterで送信)"
+              disabled={loading}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 resize-none"
+              rows={2}
+            />
+          </div>
           <Button type="submit" disabled={loading || !input.trim()}>
             送信
           </Button>

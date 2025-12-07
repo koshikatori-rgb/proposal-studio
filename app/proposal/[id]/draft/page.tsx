@@ -150,43 +150,53 @@ export default function DraftPage() {
           </p>
         </Card>
 
-        {/* ドラフト一覧 */}
+        {/* ドラフト一覧 - グリッド表示 */}
         {slides.length > 0 ? (
-          <div className="space-y-8 mb-16">
-            {slides.map((slide, index) => (
-              <div key={slide.id} className="relative">
-                {/* スライドドラフト */}
-                <div className="mb-4">
-                  <SlideDraft slide={slide} />
-                </div>
+          <div className="mb-16">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {slides.map((slide, index) => (
+                <div key={slide.id} className="relative group">
+                  {/* スライドドラフト - サムネイルサイズ */}
+                  <div className="mb-3 relative">
+                    <SlideDraft slide={slide} />
 
-                {/* コントロールボタン */}
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                      className="px-4 py-2 text-xs border border-gray-300 hover:border-black disabled:opacity-30 disabled:hover:border-gray-300 transition-all tracking-wide"
-                    >
-                      ↑ 上へ
-                    </button>
-                    <button
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === slides.length - 1}
-                      className="px-4 py-2 text-xs border border-gray-300 hover:border-black disabled:opacity-30 disabled:hover:border-gray-300 transition-all tracking-wide"
-                    >
-                      ↓ 下へ
-                    </button>
+                    {/* ホバー時のコントロールオーバーレイ */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleMoveUp(index)}
+                          disabled={index === 0}
+                          className="p-2 bg-white text-black hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium"
+                          title="上へ"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() => handleMoveDown(index)}
+                          disabled={index === slides.length - 1}
+                          className="p-2 bg-white text-black hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium"
+                          title="下へ"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          onClick={() => handleDelete(index)}
+                          className="p-2 bg-red-600 text-white hover:bg-red-700 text-xs font-medium"
+                          title="削除"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(index)}
-                    className="px-4 py-2 text-xs border border-red-300 text-red-600 hover:border-red-600 hover:bg-red-600 hover:text-white transition-all tracking-wide"
-                  >
-                    削除
-                  </button>
+
+                  {/* スライド番号 */}
+                  <p className="text-xs text-gray-400 tracking-wide text-center">
+                    {index + 1} / {slides.length}
+                  </p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
           <Card className="mb-16 text-center py-24">
