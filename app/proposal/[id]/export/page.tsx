@@ -72,14 +72,14 @@ export default function ExportPage() {
               <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
                 ✓
               </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">骨子作成</span>
+              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">AI対話</span>
             </div>
             <div className="flex-1 h-px bg-gray-300"></div>
             <div className="flex items-center">
               <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
                 ✓
               </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">スライド選択</span>
+              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">言語化確認</span>
             </div>
             <div className="flex-1 h-px bg-gray-300"></div>
             <div className="flex items-center">
@@ -137,13 +137,13 @@ export default function ExportPage() {
               スライドがありません
             </h3>
             <p className="text-sm text-gray-500 mb-8 tracking-wide">
-              スライド選択画面でスライドを追加してください
+              言語化確認画面でスライド内容を追加してください
             </p>
             <Button
-              onClick={() => router.push(`/proposal/${id}/slides`)}
+              onClick={() => router.push(`/proposal/${id}/review`)}
               variant="outline"
             >
-              スライド選択に戻る
+              言語化確認に戻る
             </Button>
           </Card>
         )}

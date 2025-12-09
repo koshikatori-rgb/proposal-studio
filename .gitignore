@@ -5,6 +5,9 @@
 .env.test.local
 .env.production.local
 
+# Google Cloud サービスアカウントキー（絶対にコミットしない！）
+gen-lang-client-*.json
+
 # 依存関係
 node_modules/
 .pnp/

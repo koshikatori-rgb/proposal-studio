@@ -144,7 +144,7 @@ export default function DashboardPage() {
                 key={proposal.id}
                 hover
                 className="cursor-pointer border-0"
-                onClick={() => router.push(`/proposal/${proposal.id}/outline`)}
+                onClick={() => router.push(`/proposal/${proposal.id}/chat`)}
               >
                 <div className="flex justify-between items-start mb-6">
                   <h3 className="text-base font-medium text-black line-clamp-2 tracking-wide flex-1 pr-4">

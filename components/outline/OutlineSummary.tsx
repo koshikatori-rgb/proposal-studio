@@ -20,7 +20,7 @@ export const OutlineSummary: React.FC<OutlineSummaryProps> = ({ proposal }) => {
           骨子サマリー
         </h2>
         <Button
-          onClick={() => router.push(`/proposal/${proposal.id}/outline-edit`)}
+          onClick={() => router.push(`/proposal/${proposal.id}/review`)}
           variant="outline"
           size="sm"
         >
