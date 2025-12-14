@@ -111,3 +111,138 @@ export const clearStorage = (): void => {
     localStorage.removeItem(key);
   });
 };
+
+// 抽出キャッシュ操作（チャット履歴のハッシュを保存）
+
+const EXTRACTION_CACHE_KEY = 'extractionCache';
+
+type ExtractionCache = {
+  proposalId: string;
+  chatHash: string;  // チャット履歴のハッシュ
+  extractedAt: number;
+};
+
+// シンプルなハッシュ関数（チャット履歴の変更検出用）
+export const generateChatHash = (messages: Array<{ content: string; role: string }>): string => {
+  const content = messages.map(m => `${m.role}:${m.content}`).join('|');
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+};
+
+export const getExtractionCache = (proposalId: string): ExtractionCache | null => {
+  if (typeof window === 'undefined') return null;
+
+  const data = localStorage.getItem(EXTRACTION_CACHE_KEY);
+  if (!data) return null;
+
+  const caches: ExtractionCache[] = JSON.parse(data);
+  return caches.find(c => c.proposalId === proposalId) || null;
+};
+
+export const saveExtractionCache = (proposalId: string, chatHash: string): void => {
+  if (typeof window === 'undefined') return;
+
+  const data = localStorage.getItem(EXTRACTION_CACHE_KEY);
+  const caches: ExtractionCache[] = data ? JSON.parse(data) : [];
+
+  const index = caches.findIndex(c => c.proposalId === proposalId);
+  const newCache: ExtractionCache = {
+    proposalId,
+    chatHash,
+    extractedAt: Date.now(),
+  };
+
+  if (index >= 0) {
+    caches[index] = newCache;
+  } else {
+    caches.push(newCache);
+  }
+
+  localStorage.setItem(EXTRACTION_CACHE_KEY, JSON.stringify(caches));
+};
+
+// outlineが有効かどうかをチェック（空でない内容があるか）
+export const isOutlineValid = (proposal: Proposal): boolean => {
+  const { outline } = proposal;
+  if (!outline) return false;
+
+  // 何かしらの内容があればtrue
+  return !!(
+    outline.currentRecognition?.background ||
+    outline.currentRecognition?.currentProblems?.length > 0 ||
+    outline.currentRecognition?.rootCauseHypothesis?.length > 0 ||
+    outline.issueSetting?.criticalIssues?.length > 0 ||
+    outline.toBeVision?.vision ||
+    outline.toBeVision?.goals?.length > 0 ||
+    outline.approach?.overview ||
+    outline.approach?.steps?.length > 0
+  );
+};
+
+// スライド生成キャッシュ操作（outlineのハッシュを保存）
+
+const SLIDE_GENERATION_CACHE_KEY = 'slideGenerationCache';
+
+type SlideGenerationCache = {
+  proposalId: string;
+  outlineHash: string;  // outlineのハッシュ
+  generatedAt: number;
+};
+
+// outlineからハッシュを生成
+export const generateOutlineHash = (outline: Proposal['outline']): string => {
+  const content = JSON.stringify(outline);
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+};
+
+export const getSlideGenerationCache = (proposalId: string): SlideGenerationCache | null => {
+  if (typeof window === 'undefined') return null;
+
+  const data = localStorage.getItem(SLIDE_GENERATION_CACHE_KEY);
+  if (!data) return null;
+
+  const caches: SlideGenerationCache[] = JSON.parse(data);
+  return caches.find(c => c.proposalId === proposalId) || null;
+};
+
+export const saveSlideGenerationCache = (proposalId: string, outlineHash: string): void => {
+  if (typeof window === 'undefined') return;
+
+  const data = localStorage.getItem(SLIDE_GENERATION_CACHE_KEY);
+  const caches: SlideGenerationCache[] = data ? JSON.parse(data) : [];
+
+  const index = caches.findIndex(c => c.proposalId === proposalId);
+  const newCache: SlideGenerationCache = {
+    proposalId,
+    outlineHash,
+    generatedAt: Date.now(),
+  };
+
+  if (index >= 0) {
+    caches[index] = newCache;
+  } else {
+    caches.push(newCache);
+  }
+
+  localStorage.setItem(SLIDE_GENERATION_CACHE_KEY, JSON.stringify(caches));
+};
+
+// slidesが有効かどうかをチェック（visualIntentが設定されているか）
+export const areSlidesValid = (proposal: Proposal): boolean => {
+  const { slides } = proposal;
+  if (!slides || slides.length === 0) return false;
+
+  // 全てのスライドにvisualIntentが設定されていればtrue
+  return slides.every(slide => !!slide.visualIntent);
+};

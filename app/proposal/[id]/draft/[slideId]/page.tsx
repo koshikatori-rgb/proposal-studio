@@ -86,7 +86,7 @@ export default function SlidePreviewPage() {
       const response = await fetch('/api/generate-slide-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slide: displaySlide }),
+        body: JSON.stringify({ slide: displaySlide, colorScheme: proposal?.settings?.colors }),
       });
 
       if (!response.ok) {

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const prompt = buildAnalysisPrompt(slide);
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 100,
       temperature: 0.2,
       messages: [

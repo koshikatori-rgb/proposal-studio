@@ -8,7 +8,16 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { getProposals, saveProposal, deleteProposal } from '@/lib/storage';
 import { generateId, formatDate } from '@/lib/utils';
+import {
+  proposalTemplates,
+  generateSlidesFromTemplate,
+  generateBlankSlides,
+  type ProposalTemplate,
+} from '@/lib/proposalTemplates';
 import type { Proposal } from '@/types';
+
+// 作成モードの型
+type CreateMode = 'ai' | 'template' | 'blank';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -16,6 +25,9 @@ export default function DashboardPage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newClient, setNewClient] = useState('');
+  const [createMode, setCreateMode] = useState<CreateMode>('ai');
+  const [selectedTemplate, setSelectedTemplate] = useState<ProposalTemplate | null>(null);
+  const [step, setStep] = useState<'mode' | 'details'>('mode');
 
   useEffect(() => {
     loadProposals();
@@ -28,6 +40,15 @@ export default function DashboardPage() {
 
   const handleCreateProposal = () => {
     if (!newTitle.trim() || !newClient.trim()) return;
+
+    // モードに応じてスライドを生成
+    let slides: Proposal['slides'] = [];
+    if (createMode === 'template' && selectedTemplate) {
+      slides = generateSlidesFromTemplate(selectedTemplate);
+    } else if (createMode === 'blank') {
+      slides = generateBlankSlides();
+    }
+    // AIモードの場合はslidesは空のまま
 
     const newProposal: Proposal = {
       id: generateId(),
@@ -57,7 +78,7 @@ export default function DashboardPage() {
           steps: [],
         },
       },
-      slides: [],
+      slides,
       settings: {
         template: 'default',
         colors: {
@@ -79,11 +100,25 @@ export default function DashboardPage() {
     };
 
     saveProposal(newProposal);
+    resetModal();
+    loadProposals();
+
+    // モードに応じて遷移先を変更
+    if (createMode === 'ai') {
+      router.push(`/proposal/${newProposal.id}/chat`);
+    } else {
+      // テンプレート・白紙の場合は言語化確認ページへ直接遷移
+      router.push(`/proposal/${newProposal.id}/review`);
+    }
+  };
+
+  const resetModal = () => {
     setShowNewModal(false);
     setNewTitle('');
     setNewClient('');
-    loadProposals();
-    router.push(`/proposal/${newProposal.id}/outline`);
+    setCreateMode('ai');
+    setSelectedTemplate(null);
+    setStep('mode');
   };
 
   const handleDelete = (id: string) => {
@@ -177,49 +212,169 @@ export default function DashboardPage() {
         {/* 新規作成モーダル */}
         {showNewModal && (
           <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-white border border-gray-200 p-12 max-w-lg w-full mx-4">
-              <h2 className="text-lg font-medium text-black mb-8 tracking-wide">
-                新規提案書作成
-              </h2>
+            <div className="bg-white border border-gray-200 p-12 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              {step === 'mode' ? (
+                <>
+                  <h2 className="text-lg font-medium text-black mb-8 tracking-wide">
+                    作成方法を選択
+                  </h2>
 
-              <div className="space-y-6 mb-12">
-                <Input
-                  label="提案書タイトル"
-                  value={newTitle}
-                  onChange={setNewTitle}
-                  placeholder="例: DX推進支援提案書"
-                  required
-                />
+                  <div className="grid grid-cols-1 gap-4 mb-8">
+                    {/* AI対話で作成 */}
+                    <button
+                      onClick={() => {
+                        setCreateMode('ai');
+                        setStep('details');
+                      }}
+                      className={`p-6 border-2 text-left transition-all hover:border-purple-500 hover:bg-purple-50 ${
+                        createMode === 'ai' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className="text-2xl">🤖</span>
+                        <div>
+                          <h3 className="font-medium text-black mb-1">AI対話で作成</h3>
+                          <p className="text-sm text-gray-500">
+                            AIと対話しながらストーリーを構築します。初めての方や、アイデアを整理したい方におすすめ。
+                          </p>
+                        </div>
+                      </div>
+                    </button>
 
-                <Input
-                  label="クライアント名"
-                  value={newClient}
-                  onChange={setNewClient}
-                  placeholder="例: 株式会社ABC"
-                  required
-                />
-              </div>
+                    {/* テンプレートから作成 */}
+                    <button
+                      onClick={() => {
+                        setCreateMode('template');
+                        setStep('details');
+                      }}
+                      className={`p-6 border-2 text-left transition-all hover:border-blue-500 hover:bg-blue-50 ${
+                        createMode === 'template' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className="text-2xl">📋</span>
+                        <div>
+                          <h3 className="font-medium text-black mb-1">テンプレートから作成</h3>
+                          <p className="text-sm text-gray-500">
+                            標準的なスライド構成から始めます。自分でストーリーを考えたい方におすすめ。
+                          </p>
+                        </div>
+                      </div>
+                    </button>
 
-              <div className="flex gap-4">
-                <Button
-                  onClick={handleCreateProposal}
-                  disabled={!newTitle.trim() || !newClient.trim()}
-                  className="flex-1"
-                >
-                  作成
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowNewModal(false);
-                    setNewTitle('');
-                    setNewClient('');
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  キャンセル
-                </Button>
-              </div>
+                    {/* 白紙から作成 */}
+                    <button
+                      onClick={() => {
+                        setCreateMode('blank');
+                        setStep('details');
+                      }}
+                      className={`p-6 border-2 text-left transition-all hover:border-gray-500 hover:bg-gray-50 ${
+                        createMode === 'blank' ? 'border-gray-500 bg-gray-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <span className="text-2xl">📄</span>
+                        <div>
+                          <h3 className="font-medium text-black mb-1">白紙から作成</h3>
+                          <p className="text-sm text-gray-500">
+                            完全に自由な構成で始めます。経験豊富な方向け。
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={resetModal} variant="outline">
+                      キャンセル
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-8">
+                    <button
+                      onClick={() => setStep('mode')}
+                      className="text-gray-500 hover:text-black transition-colors"
+                    >
+                      ←
+                    </button>
+                    <h2 className="text-lg font-medium text-black tracking-wide">
+                      {createMode === 'ai' && '🤖 AI対話で作成'}
+                      {createMode === 'template' && '📋 テンプレートから作成'}
+                      {createMode === 'blank' && '📄 白紙から作成'}
+                    </h2>
+                  </div>
+
+                  {/* テンプレート選択（テンプレートモードのみ） */}
+                  {createMode === 'template' && (
+                    <div className="mb-8">
+                      <label className="block text-xs font-medium text-gray-600 mb-3 tracking-wide">
+                        テンプレートを選択
+                      </label>
+                      <div className="grid grid-cols-1 gap-3">
+                        {proposalTemplates.map((template) => (
+                          <button
+                            key={template.id}
+                            onClick={() => setSelectedTemplate(template)}
+                            className={`p-4 border-2 text-left transition-all ${
+                              selectedTemplate?.id === template.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-blue-300'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="text-xl">{template.icon}</span>
+                              <div>
+                                <h4 className="font-medium text-black text-sm">{template.name}</h4>
+                                <p className="text-xs text-gray-500 mt-1">{template.description}</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {template.slides.length}枚のスライド
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-6 mb-8">
+                    <Input
+                      label="提案書タイトル"
+                      value={newTitle}
+                      onChange={setNewTitle}
+                      placeholder="例: DX推進支援提案書"
+                      required
+                    />
+
+                    <Input
+                      label="クライアント名"
+                      value={newClient}
+                      onChange={setNewClient}
+                      placeholder="例: 株式会社ABC"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={handleCreateProposal}
+                      disabled={
+                        !newTitle.trim() ||
+                        !newClient.trim() ||
+                        (createMode === 'template' && !selectedTemplate)
+                      }
+                      className="flex-1"
+                    >
+                      {createMode === 'ai' ? 'AI対話を開始' : '言語化確認へ進む'}
+                    </Button>
+                    <Button onClick={resetModal} variant="outline" className="flex-1">
+                      キャンセル
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

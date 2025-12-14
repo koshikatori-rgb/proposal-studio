@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { SlideElement } from '@/types';
+import { VisualPatternPreview } from '@/components/slide/VisualPatternPreview';
 
 type SlideDraftProps = {
   slide: SlideElement;
@@ -28,6 +29,17 @@ export const SlideDraft: React.FC<SlideDraftProps> = ({ slide, onEdit, onGenerat
         <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-xs px-2 py-1 tracking-wide">
           #{slide.order + 1}
         </div>
+
+        {/* ビジュアルパターンアイコン（左下） */}
+        {slide.visualHint && (
+          <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded shadow-sm p-1">
+            <VisualPatternPreview
+              pattern={slide.visualHint}
+              size="sm"
+              showLabel={false}
+            />
+          </div>
+        )}
 
         {/* ボタンエリア */}
         <div className="absolute bottom-4 right-4 flex gap-2">
@@ -86,8 +98,19 @@ export const SlideDraft: React.FC<SlideDraftProps> = ({ slide, onEdit, onGenerat
 
       {/* フッターエリア */}
       <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
-        <div className="text-xs text-gray-400 tracking-wide">
-          {getLayoutLabel(slide.layout)}
+        <div className="flex items-center gap-2">
+          {/* ビジュアルパターンアイコン */}
+          {slide.visualHint && (
+            <VisualPatternPreview
+              pattern={slide.visualHint}
+              size="sm"
+              showLabel={false}
+              className="opacity-80"
+            />
+          )}
+          <span className="text-xs text-gray-400 tracking-wide">
+            {getLayoutLabel(slide.layout)}
+          </span>
         </div>
 
         <div className="flex gap-2">
@@ -131,7 +154,7 @@ function getLayoutLabel(layout: SlideElement['layout']): string {
 }
 
 // ビジュアルヒントに基づいてコンテンツをレンダリング
-function renderVisualContent(slide: SlideElement): JSX.Element {
+function renderVisualContent(slide: SlideElement): React.ReactElement {
   const visualHint = slide.visualHint || 'bullets-only';
 
   switch (visualHint) {
@@ -160,7 +183,7 @@ function renderVisualContent(slide: SlideElement): JSX.Element {
 }
 
 // プロセスフロー図
-function renderProcessFlow(slide: SlideElement): JSX.Element {
+function renderProcessFlow(slide: SlideElement): React.ReactElement {
   const steps = slide.content.bullets?.slice(0, 4) || ['ステップ1', 'ステップ2', 'ステップ3'];
   return (
     <div className="space-y-3">
@@ -185,7 +208,7 @@ function renderProcessFlow(slide: SlideElement): JSX.Element {
 }
 
 // 比較表
-function renderComparison(slide: SlideElement): JSX.Element {
+function renderComparison(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets || [];
   const half = Math.ceil(bullets.length / 2);
   const left = bullets.slice(0, half);
@@ -220,7 +243,7 @@ function renderComparison(slide: SlideElement): JSX.Element {
 }
 
 // 階層構造
-function renderHierarchy(slide: SlideElement): JSX.Element {
+function renderHierarchy(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 6) || [];
   return (
     <div className="space-y-2">
@@ -241,7 +264,7 @@ function renderHierarchy(slide: SlideElement): JSX.Element {
 }
 
 // タイムライン
-function renderTimeline(slide: SlideElement): JSX.Element {
+function renderTimeline(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 5) || [];
   return (
     <div className="relative pl-6">
@@ -264,7 +287,7 @@ function renderTimeline(slide: SlideElement): JSX.Element {
 }
 
 // 棒グラフ
-function renderBarChart(slide: SlideElement): JSX.Element {
+function renderBarChart(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 5) || [];
   const maxHeight = 80;
 
@@ -292,7 +315,7 @@ function renderBarChart(slide: SlideElement): JSX.Element {
 }
 
 // 円グラフ
-function renderPieChart(slide: SlideElement): JSX.Element {
+function renderPieChart(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 4) || [];
   const colors = ['bg-purple-500', 'bg-blue-400', 'bg-green-400', 'bg-yellow-400'];
 
@@ -316,7 +339,7 @@ function renderPieChart(slide: SlideElement): JSX.Element {
 }
 
 // マトリクス
-function renderMatrix(slide: SlideElement): JSX.Element {
+function renderMatrix(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets || [];
 
   return (
@@ -345,7 +368,7 @@ function renderMatrix(slide: SlideElement): JSX.Element {
 }
 
 // ピラミッド
-function renderPyramid(slide: SlideElement): JSX.Element {
+function renderPyramid(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 4) || [];
 
   return (
@@ -367,7 +390,7 @@ function renderPyramid(slide: SlideElement): JSX.Element {
 }
 
 // 箇条書き+ビジュアル
-function renderBulletsWithVisual(slide: SlideElement): JSX.Element {
+function renderBulletsWithVisual(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets?.slice(0, 4) || [];
 
   return (
@@ -391,7 +414,7 @@ function renderBulletsWithVisual(slide: SlideElement): JSX.Element {
 }
 
 // 箇条書きのみ
-function renderBulletsOnly(slide: SlideElement): JSX.Element {
+function renderBulletsOnly(slide: SlideElement): React.ReactElement {
   const bullets = slide.content.bullets || [];
   const body = slide.content.body;
 

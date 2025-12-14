@@ -1,32 +1,67 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useProposal } from '@/hooks/useProposal';
 import { SlideDraft } from '@/components/slides/SlideDraft';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { StepIndicator } from '@/components/common/StepIndicator';
+import { RegenerationWorker } from '@/components/RegenerationWorker';
+import { RegenerationStatus } from '@/components/RegenerationStatus';
 import { saveProposal } from '@/lib/storage';
+import {
+  createRegenerationQueue,
+  hasActiveQueue,
+  clearRegenerationQueue,
+  getProgress,
+} from '@/lib/regenerationQueue';
 import type { SlideElement } from '@/types';
 
 export default function DraftPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { proposal, loading } = useProposal(id);
+  const { proposal, loading, refresh } = useProposal(id);
   const [slides, setSlides] = useState<SlideElement[]>([]);
   const [generatingSlideId, setGeneratingSlideId] = useState<string | null>(null);
+  const [hasBackgroundTask, setHasBackgroundTask] = useState(false); // バックグラウンドタスクがあるか
+  const [regenerationProgress, setRegenerationProgress] = useState({ completed: 0, total: 0, failed: 0 }); // 進捗状況
+  const isGeneratingRef = useRef(false); // 画像生成の重複実行を防ぐフラグ
 
   // proposalが読み込まれたらslidesを初期化
   useEffect(() => {
     if (proposal && proposal.slides.length > 0) {
-      setSlides([...proposal.slides].sort((a, b) => a.order - b.order));
+      const sortedSlides = [...proposal.slides].sort((a, b) => a.order - b.order);
+      console.log('📥 Slides初期化:', {
+        totalSlides: sortedSlides.length,
+        slidesWithImageUrl: sortedSlides.filter(s => s.imageUrl).length,
+        slidesWithVisualIntent: sortedSlides.filter(s => s.visualIntent).length,
+        firstSlideImageUrl: sortedSlides[0]?.imageUrl?.substring(0, 50)
+      });
+      setSlides(sortedSlides);
     }
   }, [proposal]);
+
+  // バックグラウンドタスクの状態を初期化時にチェック
+  useEffect(() => {
+    if (hasActiveQueue(id)) {
+      setHasBackgroundTask(true);
+      const progress = getProgress(id);
+      setRegenerationProgress(progress);
+      console.log('🔄 既存のバックグラウンドタスクを検出:', progress);
+    }
+  }, [id]);
 
   // visualIntentがあるスライドに対して自動的にワイヤーフレーム画像を生成
   useEffect(() => {
     if (!proposal || slides.length === 0) return;
+
+    // 既に画像生成中なら何もしない
+    if (isGeneratingRef.current) {
+      console.log('⏸️ 画像生成は既に実行中です。スキップします。');
+      return;
+    }
 
     const generateWireframesForSlides = async () => {
       // visualIntentはあるが画像がまだないスライドを見つける
@@ -39,7 +74,12 @@ export default function DraftPage() {
         return;
       }
 
+      // 画像生成開始
+      isGeneratingRef.current = true;
       console.log(`🎨 ${slidesNeedingImages.length} 枚のスライドにワイヤーフレーム画像を生成中...`);
+
+      // 生成結果を蓄積するマップ
+      const generatedImages = new Map<string, string>();
 
       // 並列で画像生成（ただし負荷を考慮して3枚ずつ）
       const batchSize = 3;
@@ -54,7 +94,7 @@ export default function DraftPage() {
               const response = await fetch('/api/generate-slide-image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slide }),
+                body: JSON.stringify({ slide, colorScheme: proposal?.settings?.colors }),
               });
 
               if (!response.ok) {
@@ -62,14 +102,26 @@ export default function DraftPage() {
                 return;
               }
 
-              const { imageUrl } = await response.json();
+              const data = await response.json();
+              const { imageUrl } = data;
+
+              console.log(`📦 API Response for ${slide.title}:`, {
+                hasImageUrl: !!imageUrl,
+                imageUrlLength: imageUrl?.length,
+                imageUrlPreview: imageUrl?.substring(0, 100)
+              });
+
+              // 生成結果を蓄積
+              generatedImages.set(slide.id, imageUrl);
 
               // スライドに画像URLを追加
-              setSlides(prevSlides =>
-                prevSlides.map(s =>
+              setSlides(prevSlides => {
+                const updated = prevSlides.map(s =>
                   s.id === slide.id ? { ...s, imageUrl } : s
-                )
-              );
+                );
+                console.log(`🔄 setSlides called for ${slide.title}, imageUrl set:`, !!imageUrl);
+                return updated;
+              });
 
               console.log(`✅ ワイヤーフレーム画像生成完了: ${slide.title}`);
             } catch (error) {
@@ -83,17 +135,59 @@ export default function DraftPage() {
 
       console.log('🎨 全てのワイヤーフレーム画像生成完了');
 
-      // 画像生成後に提案書を保存
-      const updatedProposal = {
-        ...proposal,
-        slides: slides,
-        updatedAt: Date.now(),
-      };
-      saveProposal(updatedProposal);
+      // 画像生成後に提案書を保存（最新のslides状態を使用）
+      if (generatedImages.size > 0) {
+        // setSlides経由で最新の状態を取得して保存
+        setSlides(currentSlides => {
+          // currentSlidesは最新の状態（すでにsetSlidesで更新済み）
+          // generatedImagesで漏れがあれば追加適用
+          const finalSlides = currentSlides.map(s =>
+            generatedImages.has(s.id) && !s.imageUrl
+              ? { ...s, imageUrl: generatedImages.get(s.id) }
+              : s
+          );
+
+          // proposal.slidesも最新の状態で保存
+          const updatedProposal = {
+            ...proposal,
+            slides: finalSlides,
+            updatedAt: Date.now(),
+          };
+          saveProposal(updatedProposal);
+          console.log('💾 画像付きスライドを保存しました', {
+            totalSlides: finalSlides.length,
+            slidesWithImages: finalSlides.filter(s => s.imageUrl).length
+          });
+
+          return finalSlides;
+        });
+      }
+
+      // 画像生成完了
+      isGeneratingRef.current = false;
     };
 
     generateWireframesForSlides();
   }, [proposal, slides.length]); // slides全体を依存配列に入れると無限ループになるのでlengthのみ
+
+  // バックグラウンドタスクの進捗更新ハンドラー
+  const handleProgressUpdate = useCallback((progress: { completed: number; total: number; failed: number }) => {
+    setRegenerationProgress(progress);
+  }, []);
+
+  // スライド更新ハンドラー（バックグラウンドワーカーから呼ばれる）
+  const handleSlideUpdate = useCallback((slideId: string, imageUrl: string) => {
+    setSlides(prevSlides =>
+      prevSlides.map(s => s.id === slideId ? { ...s, imageUrl } : s)
+    );
+  }, []);
+
+  // 再生成完了ハンドラー
+  const handleRegenerationComplete = useCallback(() => {
+    setHasBackgroundTask(false);
+    // 最新のproposalを再読み込み
+    refresh();
+  }, [refresh]);
 
   if (loading) {
     return (
@@ -164,7 +258,7 @@ export default function DraftPage() {
       const response = await fetch('/api/generate-slide-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slide }),
+        body: JSON.stringify({ slide, colorScheme: proposal?.settings?.colors }),
       });
 
       if (!response.ok) {
@@ -226,7 +320,7 @@ export default function DraftPage() {
       const imageResponse = await fetch('/api/generate-slide-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slide: slideWithNewIntent }),
+        body: JSON.stringify({ slide: slideWithNewIntent, colorScheme: proposal?.settings?.colors }),
       });
 
       if (!imageResponse.ok) {
@@ -258,6 +352,29 @@ export default function DraftPage() {
     }
   };
 
+  // 全ページ再生成（バックグラウンドキュー方式）
+  const handleRegenerateAll = () => {
+    // 既にキューが実行中なら確認
+    if (hasActiveQueue(id)) {
+      if (!confirm('既に再生成が進行中です。キャンセルして最初からやり直しますか？')) {
+        return;
+      }
+      clearRegenerationQueue(id);
+    }
+
+    if (!confirm('全てのスライドのビジュアル表現意図と画像を再生成しますか？\n\nページを移動しても処理は継続されます。')) {
+      return;
+    }
+
+    // キューを作成
+    const slidesForQueue = slides.map(s => ({ id: s.id, title: s.title || 'タイトル未設定' }));
+    createRegenerationQueue(id, slidesForQueue);
+    setHasBackgroundTask(true);
+    setRegenerationProgress({ completed: 0, total: slides.length, failed: 0 });
+
+    console.log(`🔄 全${slides.length}枚のスライドを再生成キューに追加しました`);
+  };
+
   const handleSaveAndContinue = () => {
     // 変更を保存
     const updatedProposal = {
@@ -283,49 +400,65 @@ export default function DraftPage() {
         </div>
 
         {/* ステップインジケーター */}
-        <div className="mb-12">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                ✓
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">AI対話</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                ✓
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">言語化確認</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                3
-              </div>
-              <span className="ml-3 text-xs font-medium text-black tracking-wide">ドラフト確認</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 border border-gray-300 text-gray-400 flex items-center justify-center font-medium text-xs">
-                4
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">エクスポート</span>
-            </div>
-          </div>
-        </div>
+        <StepIndicator proposalId={id} currentStep={3} />
 
         {/* 説明カード */}
         <Card className="mb-12">
-          <h2 className="text-base font-medium text-black mb-4 tracking-wide">
-            ドラフト確認
-          </h2>
-          <p className="text-sm text-gray-500 tracking-wide mb-3">
-            言語化された内容をもとに生成されたスライドのラフ画（ドラフト）を確認できます。順序の変更や削除も可能です。
-          </p>
-          <p className="text-xs text-gray-400 tracking-wide">
-            全 {slides.length} 枚のスライド
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-base font-medium text-black mb-4 tracking-wide">
+                ドラフト確認
+              </h2>
+              <p className="text-sm text-gray-500 tracking-wide mb-3">
+                言語化された内容をもとに生成されたスライドのラフ画（ドラフト）を確認できます。順序の変更や削除も可能です。
+              </p>
+              <p className="text-xs text-gray-400 tracking-wide">
+                全 {slides.length} 枚のスライド
+              </p>
+            </div>
+
+            {/* 全ページ再生成ボタン */}
+            {slides.length > 0 && (
+              <div className="flex flex-col items-end gap-2">
+                <Button
+                  onClick={handleRegenerateAll}
+                  variant="outline"
+                  disabled={hasBackgroundTask || generatingSlideId !== null}
+                  className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                >
+                  {hasBackgroundTask ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      再生成中 ({regenerationProgress.completed}/{regenerationProgress.total})
+                    </>
+                  ) : (
+                    '🔄 全ページ再生成'
+                  )}
+                </Button>
+                <p className="text-xs text-gray-400">
+                  {hasBackgroundTask ? 'ページを移動しても処理は継続します' : '全スライドの画像を再生成します'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* 進捗バー */}
+          {hasBackgroundTask && (
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${regenerationProgress.total > 0 ? (regenerationProgress.completed / regenerationProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>{regenerationProgress.completed} / {regenerationProgress.total} 枚完了</span>
+                {regenerationProgress.failed > 0 && (
+                  <span className="text-red-500">{regenerationProgress.failed} 枚失敗</span>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* ドラフト一覧 - グリッド表示 */}
@@ -443,6 +576,22 @@ export default function DraftPage() {
           </Button>
         </div>
       </div>
+
+      {/* バックグラウンドワーカー（常に実行） */}
+      <RegenerationWorker
+        proposalId={id}
+        onProgressUpdate={handleProgressUpdate}
+        onSlideUpdate={handleSlideUpdate}
+        onComplete={handleRegenerationComplete}
+      />
+
+      {/* フローティング進捗表示（バックグラウンドタスクがある場合） */}
+      {hasBackgroundTask && (
+        <RegenerationStatus
+          proposalId={id}
+          onRefresh={refresh}
+        />
+      )}
     </div>
   );
 }

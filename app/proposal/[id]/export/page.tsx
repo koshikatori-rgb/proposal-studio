@@ -6,6 +6,7 @@ import { useProposal } from '@/hooks/useProposal';
 import { SlidePreview } from '@/components/slides/SlidePreview';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { StepIndicator } from '@/components/common/StepIndicator';
 import { generatePowerPoint } from '@/lib/pptxGenerator';
 
 export default function ExportPage() {
@@ -66,37 +67,7 @@ export default function ExportPage() {
         </div>
 
         {/* ステップインジケーター */}
-        <div className="mb-12">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                ✓
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">AI対話</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                ✓
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">言語化確認</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                ✓
-              </div>
-              <span className="ml-3 text-xs font-medium text-gray-400 tracking-wide">ドラフト確認</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-medium text-xs">
-                4
-              </div>
-              <span className="ml-3 text-xs font-medium text-black tracking-wide">エクスポート</span>
-            </div>
-          </div>
-        </div>
+        <StepIndicator proposalId={id} currentStep={4} />
 
         {/* 説明カード */}
         <Card className="mb-12">
