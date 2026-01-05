@@ -248,27 +248,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [consultationContent, setConsultationContent] = useState('');
   const [ourStrength, setOurStrength] = useState('');
 
-  // フォームからプロンプトを生成（Phase A: 対話開始用）
-  // ※「作成して」等の指示は含めず、情報提供のみ。AIは必ず質問から開始する
-  const generatePrompt = (): string => {
-    // 情報が入力されていない場合はシンプルな開始メッセージ
+  // ユーザーに表示するメッセージを生成（チャット履歴に残る）
+  const generateUserMessage = (): string => {
+    // 情報が入力されていない場合
     if (!clientInfo && !consultationContent && !ourStrength) {
       return '提案書のストーリーラインを一緒に考えてほしいです。まず何から聞いてもらえますか？';
     }
-
-    // 情報がある場合は、対話の出発点として情報を提供
+    // 情報がある場合は、参考情報を含めてチャット履歴に残す
     return `提案書を作成したいのですが、まずヒアリングをお願いします。
 
-【クライアントについて】
+━━━━━━━━━━━━━━━━━━━━
+【参考情報】
+━━━━━━━━━━━━━━━━━━━━
+
+■ クライアント情報
 ${clientInfo || '（未入力）'}
 
-【相談内容】
+■ 相談内容・RFP概要
 ${consultationContent || '（未入力）'}
 
-【私たちの強み】
+■ 自社の強み・特徴
 ${ourStrength || '（未入力）'}
 
-上記の情報を踏まえて、まず確認したいことを教えてください。`;
+━━━━━━━━━━━━━━━━━━━━
+
+上記の情報を踏まえて、確認したいことを教えてください。`;
+  };
+
+  // プレビュー用：送信されるメッセージをそのまま表示
+  const formatInputPreview = (): string => {
+    return generateUserMessage();
   };
 
   // プリセット適用
@@ -278,18 +287,34 @@ ${ourStrength || '（未入力）'}
     setOurStrength(preset.data.ourStrength);
   };
 
-  // プロンプトをチャットにコピーして送信
-  const handleCopyAndSend = async () => {
-    const prompt = generatePrompt();
-    setInput('');
-    setShowPromptBuilder(false);
-    await sendMessage(prompt);
+  // クライアント情報が入力されているかチェック
+  const isClientInfoValid = (): boolean => {
+    return clientInfo.trim().length > 0;
   };
 
-  // プロンプトをチャット入力欄にコピー（送信はしない）
+  // 送信
+  const handleCopyAndSend = async () => {
+    // クライアント情報が空の場合は警告
+    if (!isClientInfoValid()) {
+      const proceed = confirm(
+        'クライアント情報が入力されていません。\n\n' +
+        'クライアント情報（業界、企業規模、直面している状況など）は、' +
+        '提案書の仮説を作る上で最重要の情報です。\n\n' +
+        '入力せずに続けますか？'
+      );
+      if (!proceed) return;
+    }
+
+    const userMessage = generateUserMessage();
+    setInput('');
+    setShowPromptBuilder(false);
+    await sendMessage(userMessage);
+  };
+
+  // メッセージをチャット入力欄にコピー（送信はしない）
   const handleCopyToInput = () => {
-    const prompt = generatePrompt();
-    setInput(prompt);
+    const userMessage = generateUserMessage();
+    setInput(userMessage);
     setShowPromptBuilder(false);
   };
 
@@ -427,11 +452,11 @@ ${ourStrength || '（未入力）'}
             {/* プレビュー（折りたたみ可能） */}
             <details className="group">
               <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
-                生成されるプロンプトをプレビュー ▼
+                送信内容をプレビュー ▼
               </summary>
               <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-[200px] overflow-y-auto">
                 <pre className="text-[10px] text-gray-600 whitespace-pre-wrap font-sans leading-relaxed">
-                  {generatePrompt()}
+                  {formatInputPreview()}
                 </pre>
               </div>
             </details>

@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
     const messageCount = messages.length;
     const systemPrompt = getChatSystemPrompt(messageCount);
 
+    // 参考情報はユーザーメッセージに含まれているため、
+    // システムプロンプトへの追加は不要（AIはチャット履歴を参照する）
+
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8192, // 長文の構成案が途切れないように増量
