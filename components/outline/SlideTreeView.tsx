@@ -78,14 +78,56 @@ const storyFlow = [
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-200',
   },
+  {
+    type: 'schedule',
+    label: 'スケジュール',
+    role: 'いつまでに何をするか',
+    color: 'bg-cyan-500',
+    textColor: 'text-cyan-700',
+    bgColor: 'bg-cyan-50',
+    borderColor: 'border-cyan-200',
+  },
+  {
+    type: 'team',
+    label: '体制',
+    role: '誰がやるか',
+    color: 'bg-teal-500',
+    textColor: 'text-teal-700',
+    bgColor: 'bg-teal-50',
+    borderColor: 'border-teal-200',
+  },
+  {
+    type: 'estimate',
+    label: '見積り',
+    role: 'いくらかかるか',
+    color: 'bg-amber-500',
+    textColor: 'text-amber-700',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+  },
 ];
 
 // スライドタイプからストーリーフロー情報を取得
 const getStoryInfo = (slideType: string | undefined) => {
   if (!slideType) return storyFlow[0];
-  if (slideType === 'approach_overview' || slideType === 'approach_detail') {
+
+  // アプローチ系（概要・詳細・Why Us・リスク管理等）
+  if (slideType === 'approach_overview' || slideType === 'approach_detail' ||
+      slideType === 'why_us' || slideType === 'risk_management' ||
+      slideType === 'meeting_structure') {
     return storyFlow.find(s => s.type === 'approach')!;
   }
+
+  // 期待効果はToBe像に統合
+  if (slideType === 'expected_effect') {
+    return storyFlow.find(s => s.type === 'tobe_vision')!;
+  }
+
+  // Appendixはその他として見積りに統合
+  if (slideType === 'appendix') {
+    return storyFlow.find(s => s.type === 'estimate')!;
+  }
+
   return storyFlow.find(s => s.type === slideType) || storyFlow[0];
 };
 
@@ -294,8 +336,21 @@ export const SlideTreeView: React.FC<SlideTreeViewProps> = ({
   // スライドをセクションごとにグループ化
   const groupedSlides = slides.reduce((acc, slide) => {
     let key = slide.type || 'other';
-    if (key === 'approach_detail') key = 'approach';
-    if (key === 'approach_overview') key = 'approach';
+
+    // アプローチ系
+    if (key === 'approach_detail' || key === 'approach_overview' ||
+        key === 'why_us' || key === 'risk_management' || key === 'meeting_structure') {
+      key = 'approach';
+    }
+    // 期待効果はToBe像に統合
+    if (key === 'expected_effect') {
+      key = 'tobe_vision';
+    }
+    // Appendixは見積りに統合
+    if (key === 'appendix') {
+      key = 'estimate';
+    }
+
     if (!acc[key]) acc[key] = [];
     acc[key].push(slide);
     return acc;

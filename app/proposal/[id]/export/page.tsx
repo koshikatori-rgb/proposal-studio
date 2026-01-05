@@ -67,7 +67,7 @@ export default function ExportPage() {
         </div>
 
         {/* ステップインジケーター */}
-        <StepIndicator proposalId={id} currentStep={4} />
+        <StepIndicator proposalId={id} currentStep={5} />
 
         {/* 説明カード */}
         <Card className="mb-12">

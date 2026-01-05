@@ -465,14 +465,14 @@ export default function ChatPage() {
     // または proposal.outline に有効なデータがある場合
     if (outlineText && outlineText.length > 0) {
       console.log('✅ 骨子テキストが既に表示されています。APIをスキップして遷移します。');
-      router.push(`/proposal/${id}/review`);
+      router.push(`/proposal/${id}/story`);
       return;
     }
 
     // proposal.outlineが有効な場合もスキップ
     if (isOutlineValid(proposal)) {
       console.log('✅ proposal.outlineが有効です。APIをスキップして遷移します。');
-      router.push(`/proposal/${id}/review`);
+      router.push(`/proposal/${id}/story`);
       return;
     }
 
@@ -481,7 +481,7 @@ export default function ChatPage() {
 
     // チャット履歴が空の場合は、そのまま次のページへ
     if (!chatSession || chatSession.messages.length === 0) {
-      router.push(`/proposal/${id}/review`);
+      router.push(`/proposal/${id}/story`);
       return;
     }
 
@@ -492,7 +492,7 @@ export default function ChatPage() {
     const cache = getExtractionCache(id);
     if (cache && cache.chatHash === currentChatHash && isOutlineValid(proposal)) {
       console.log('✅ キャッシュヒット: 骨子抽出をスキップ');
-      router.push(`/proposal/${id}/review`);
+      router.push(`/proposal/${id}/story`);
       return;
     }
 
@@ -564,7 +564,7 @@ export default function ChatPage() {
       // 抽出キャッシュを保存
       saveExtractionCache(id, currentChatHash);
 
-      router.push(`/proposal/${id}/review`);
+      router.push(`/proposal/${id}/story`);
     } catch (error) {
       console.error('Extraction error:', error);
       const errorMessage = error instanceof Error ? error.message : '不明なエラー';
@@ -625,7 +625,7 @@ export default function ChatPage() {
                 {extracting ? '抽出中...' : '骨子をテキスト化'}
               </Button>
               <Button onClick={handleNextStep} disabled={extracting}>
-                {extracting ? '処理中...' : '次へ: 言語化確認 →'}
+                {extracting ? '処理中...' : '次へ: ストーリー編集 →'}
               </Button>
             </div>
           </div>

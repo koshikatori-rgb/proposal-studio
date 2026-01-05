@@ -2,5 +2,7 @@
   "workspace_id": "d1bb-b769-bbbd-db88",
   "workspace_id_at": "2025-12-07T06:04:21.619Z",
   "project_name": "my-app",
-  "cloud_sync": false
+  "cloud_sync": false,
+  "git_id": "c721-0a93-2cda-e9f9",
+  "git_id_at": "2025-12-26T02:41:28.704Z"
 }

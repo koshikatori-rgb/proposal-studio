@@ -10,14 +10,15 @@ type Step = {
 
 type StepIndicatorProps = {
   proposalId: string;
-  currentStep: 1 | 2 | 3 | 4;
+  currentStep: 1 | 2 | 3 | 4 | 5;
 };
 
 const steps: Step[] = [
   { number: 1, label: 'AI対話', path: 'chat' },
-  { number: 2, label: '言語化確認', path: 'review' },
-  { number: 3, label: 'ドラフト確認', path: 'draft' },
-  { number: 4, label: 'エクスポート', path: 'export' },
+  { number: 2, label: 'ストーリー編集', path: 'story' },
+  { number: 3, label: 'レイアウト', path: 'layout' },
+  { number: 4, label: 'ドラフト確認', path: 'draft' },
+  { number: 5, label: 'エクスポート', path: 'export' },
 ];
 
 export const StepIndicator: React.FC<StepIndicatorProps> = ({

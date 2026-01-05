@@ -400,7 +400,7 @@ export default function DraftPage() {
         </div>
 
         {/* ステップインジケーター */}
-        <StepIndicator proposalId={id} currentStep={3} />
+        <StepIndicator proposalId={id} currentStep={4} />
 
         {/* 説明カード */}
         <Card className="mb-12">
@@ -548,13 +548,13 @@ export default function DraftPage() {
               スライドがありません
             </h3>
             <p className="text-sm text-gray-500 mb-8 tracking-wide">
-              言語化確認画面でスライド内容を追加してください
+              レイアウト設計画面でスライド内容を追加してください
             </p>
             <Button
-              onClick={() => router.push(`/proposal/${id}/review`)}
+              onClick={() => router.push(`/proposal/${id}/layout`)}
               variant="outline"
             >
-              言語化確認に戻る
+              レイアウト設計に戻る
             </Button>
           </Card>
         )}
@@ -562,10 +562,10 @@ export default function DraftPage() {
         {/* アクションボタン */}
         <div className="flex justify-between items-center">
           <Button
-            onClick={() => router.push(`/proposal/${id}/review`)}
+            onClick={() => router.push(`/proposal/${id}/layout`)}
             variant="outline"
           >
-            ← 言語化確認に戻る
+            ← レイアウト設計に戻る
           </Button>
 
           <Button
