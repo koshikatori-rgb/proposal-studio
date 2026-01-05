@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -107,8 +106,8 @@ export default function DashboardPage() {
     if (createMode === 'ai') {
       router.push(`/proposal/${newProposal.id}/chat`);
     } else {
-      // テンプレート・白紙の場合は言語化確認ページへ直接遷移
-      router.push(`/proposal/${newProposal.id}/review`);
+      // テンプレート・白紙の場合はストーリー編集ページへ直接遷移
+      router.push(`/proposal/${newProposal.id}/story`);
     }
   };
 
