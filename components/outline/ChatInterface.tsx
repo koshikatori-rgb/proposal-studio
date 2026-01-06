@@ -287,19 +287,27 @@ ${ourStrength || '（未入力）'}
     setOurStrength(preset.data.ourStrength);
   };
 
-  // クライアント情報が入力されているかチェック
-  const isClientInfoValid = (): boolean => {
-    return clientInfo.trim().length > 0;
+  // 基本情報（クライアント情報・自社の強み）が入力されているかチェック
+  const getValidationErrors = (): string[] => {
+    const errors: string[] = [];
+    if (!clientInfo.trim()) {
+      errors.push('クライアント情報（業界、企業規模、直面している状況など）');
+    }
+    if (!ourStrength.trim()) {
+      errors.push('自社の強み・特徴（提案の根拠となる強み）');
+    }
+    return errors;
   };
 
   // 送信
   const handleCopyAndSend = async () => {
-    // クライアント情報が空の場合は警告
-    if (!isClientInfoValid()) {
+    // 基本情報が空の場合は警告
+    const errors = getValidationErrors();
+    if (errors.length > 0) {
       const proceed = confirm(
-        'クライアント情報が入力されていません。\n\n' +
-        'クライアント情報（業界、企業規模、直面している状況など）は、' +
-        '提案書の仮説を作る上で最重要の情報です。\n\n' +
+        '以下の基本情報が入力されていません:\n\n' +
+        errors.map(e => `・${e}`).join('\n') +
+        '\n\nこれらは提案書の仮説を作る上で最重要の情報です。\n' +
         '入力せずに続けますか？'
       );
       if (!proceed) return;
